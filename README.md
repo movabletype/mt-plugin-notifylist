@@ -2,6 +2,9 @@ mt-plugin-notifylist
 ====================
 This plugin enables providing Movable Type email notification support.
 
+## Requirement
+Movable Type 6.x or higher
+
 ## Installation
 1. Unpack the mt-plugin-notifylist archive.
 2. Upload and copy the mt-plugin-notifylist/mt-add-notify.cgi file to your MT folder. ( /path/to/mt )
