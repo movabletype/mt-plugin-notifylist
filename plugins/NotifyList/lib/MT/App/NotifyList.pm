@@ -31,11 +31,15 @@ sub subscribe {
     my $q           = $app->{query};
     my $subscr_addr = lc $q->param('email');
     $subscr_addr =~ s/(^\s+|\s+$)//gs;
+    my $plugin = MT->component('NotifyList');
+
     return $app->errtrans("Please enter a valid email address.")
         unless ( $subscr_addr && MT::Util::is_valid_email($subscr_addr) );
     unless ( $q->param('blog_id') ) {
-        return $app->errtrans(
-            "Missing required parameter: blog_id. Please consult the user manual to configure notifications."
+        return $app->error(
+            $plugin->translate(
+                "Missing required parameter: blog_id. Please consult the user manual to configure notifications."
+            )
         );
     }
 
@@ -60,14 +64,16 @@ sub subscribe {
     my $redirect_url = $q->param('_redirect');
     my $site_url     = $blog->site_url;
     if ( $redirect_url !~ m!\Q$site_url\E! ) {
-        return $app->errtrans(
-            "An invalid redirect parameter was provided. The weblog owner needs to specify a path that matches with the domain of the weblog."
+        return $app->error(
+            $plugin->translate(
+                "An invalid redirect parameter was provided. The weblog owner needs to specify a path that matches with the domain of the weblog."
+            )
         );
     }
 
     if ( $app->lookup( $blog->id, $subscr_addr ) ) {
         return $app->error(
-            $app->translate(
+            $plugin->translate(
                 "The email address '[_1]' is already in the notification list for this weblog.",
                 $subscr_addr
             )
@@ -78,7 +84,7 @@ sub subscribe {
         id      => 'verify_subscribe',
         From    => $admin_email_addr,
         To      => $subscr_addr,
-        Subject => $app->translate("Please verify your email to subscribe")
+        Subject => $plugin->translate("Please verify your email to subscribe")
     );
     my $charset = $app->config('MailEncoding')
         || $app->config('PublishCharset');
@@ -108,7 +114,7 @@ sub subscribe {
     use MT::Mail;
     MT::Mail->send( \%head, $body );
     my $message
-        = $app->translate( '_NOTIFY_REQUIRE_CONFIRMATION', $subscr_addr );
+        = $plugin->translate( '_NOTIFY_REQUIRE_CONFIRMATION', $subscr_addr );
     $charset = $app->charset;
     <<HTML;
 <!DOCTYPE html PUBLIC "-//W3C//DTD XHTML 1.0 Transitional//EN" "http://www.w3.org/TR/xhtml1/DTD/xhtml1-transitional.dtd">
@@ -217,18 +223,19 @@ sub confirm {
 }
 
 sub unsubscribe {
-    my $app = shift;
+    my $app    = shift;
+    my $q      = $app->{query};
+    my $email  = $q->param('email');
+    my $plugin = MT->component('NotifyList');
 
-    my $q = $app->{query};
-
-    my $email = $q->param('email');
     require MT::Notification;
     my $notification = MT::Notification->load( { email => $email } );
-    return $app->translate( "The address [_1] was not subscribed.", $email )
+    return $plugin->translate( "The address [_1] was not subscribed.",
+        $email )
         . "\n\n"
         if !$notification;
     $notification->remove();
-    return $app->translate( "The address [_1] has been unsubscribed.",
+    return $plugin->translate( "The address [_1] has been unsubscribed.",
         $email )
         . "\n\n";
 }
