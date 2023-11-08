@@ -1,3 +1,5 @@
+This plugin is no longer supported in Movable Type 8 and later.
+
 mt-plugin-notifylist
 ====================
 This plugin enables providing Movable Type email notification support.
